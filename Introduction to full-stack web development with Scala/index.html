@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <title></title>
+    <link rel="stylesheet" href="dist/reveal.css" />
+    <link rel="stylesheet" href="dist/theme/black.css" id="theme" />
+    <link rel="stylesheet" href="plugin/highlight/zenburn.css" />
+	<link rel="stylesheet" href="css/layout.css" />
+	<link rel="stylesheet" href="plugin/customcontrols/style.css">
+
+
+
+    <script defer src="dist/fontawesome/all.min.js"></script>
+
+	<script type="text/javascript">
+		var forgetPop = true;
+		function onPopState(event) {
+			if(forgetPop){
+				forgetPop = false;
+			} else {
+				parent.postMessage(event.target.location.href, "app://obsidian.md");
+			}
+        }
+		window.onpopstate = onPopState;
+		window.onmessage = event => {
+			if(event.data == "reload"){
+				window.document.location.reload();
+			}
+			forgetPop = true;
+		}
+
+		function fitElements(){
+			const itemsToFit = document.getElementsByClassName('fitText');
+			for (const item in itemsToFit) {
+				if (Object.hasOwnProperty.call(itemsToFit, item)) {
+					var element = itemsToFit[item];
+					fitElement(element,1, 1000);
+					element.classList.remove('fitText');
+				}
+			}
+		}
+
+		function fitElement(element, start, end){
+
+			let size = (end + start) / 2;
+			element.style.fontSize = `${size}px`;
+
+			if(Math.abs(start - end) < 1){
+				while(element.scrollHeight > element.offsetHeight){
+					size--;
+					element.style.fontSize = `${size}px`;
+				}
+				return;
+			}
+
+			if(element.scrollHeight > element.offsetHeight){
+				fitElement(element, start, size);
+			} else {
+				fitElement(element, size, end);
+			}		
+		}
+
+
+		document.onreadystatechange = () => {
+			fitElements();
+			if (document.readyState === 'complete') {
+				if (window.location.href.indexOf("?export") != -1){
+					parent.postMessage(event.target.location.href, "app://obsidian.md");
+				}
+				if (window.location.href.indexOf("print-pdf") != -1){
+					let stateCheck = setInterval(() => {
+						clearInterval(stateCheck);
+						window.print();
+					}, 250);
+				}
+			}
+	};
+
+
+        </script>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides"><section  data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Introduction to
+ # Full-stack web development
+ 
+ ### With Scala
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+# Why scala?
+
+- Concise and Expressive
+- Compile time safety
+- Sane (looking at you Typescript)
+- Great Javascript / Typescript interoperability
+- Great ecosystem
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Full-stack, you say?
+
+- **Backend**
+	- JVM
+	- GraalVM Native Image
+	- JS runtimes
+	- Native (LLVM)
+	- WASM engines
+- **Frontend**
+	- Javascript
+	- WASM
+- **Shared code**
+</div></script></section><section ><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Frontend libraries
+
+- Reactive style
+	- [Laminar](https://laminar.dev/) - most developed
+	- [Calico](https://www.armanbilge.com/calico/) - for pure FP enthusiasts
+- Virtual DOM style
+	- [Tyrian](https://tyrian.indigoengine.io/) - ELM-like
+	- React wrappers
+		- [Slinky](https://slinky.dev/) - mimics ES6
+		- [scalajs-react](https://japgolly.github.io/scalajs-react/) - older one
+- HTMX-like
+	- [Korolev](https://fomkin.org/korolev/user-guide.html)
+- [... and more](https://www.scala-js.org/libraries/libs.html)
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+# Laminar
+
+<!-- .element: style="margin-bottom: 6rem" -->
+
+- Simple mental model.
+- Great documentation.
+- Very fast due to fine-grained reactivity.
+- Simple state management.
+- No SPA support (yet).
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Laminar Example
+
+```scala
+val nameVar = Var(initial = "world")
+div(
+  label("Your name: "),
+  input(
+    placeholder := "Enter your name here",
+    onInput.mapToValue --> nameVar
+  ),
+  p(
+    "Hello, ",
+    text <-- nameVar.signal.map(_.toUpperCase)
+  )
+)
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+# Calico
+
+- **Calico** is a UI library for the [Typelevel.js](https://typelevel.org/) ecosystem.
+- Leverages  [Cats Effect](https://typelevel.org/cats-effect/) and [FS2](https://fs2.io/).
+- Composable, reactive, and safe.
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+# Calico Example
+
+```scala
+val app: Resource[IO, HtmlDivElement[IO]] =
+  SignallingRef[IO].of("world").toResource.flatMap { name =>
+    div(
+      label("Your name: "),
+      input.withSelf { self =>
+        (
+          placeholder := "Enter your name here",
+          onInput --> (_.foreach(_ => 
+            self.value.get.flatMap(name.set)
+          ))
+        )
+      },
+      span(" Hello, ", name.map(_.toUpperCase))
+    )
+  }
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+# Tyrian
+
+- Elm-inspired, purely functional.
+- Tyrian's SSR and [HTMX](https://htmx.org/) support offers a middle ground between static HTML and full blown SPAs.
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Tyrian Example
+
+```scala
+type Model = String
+enum Msg:
+  case NewContent(content: String)
+  case NoOp
+
+object Main extends TyrianIOApp[Msg, Model]:
+  def view(model: Model): Html[Msg] =
+    div()(
+      input(
+        placeholder := "Text to reverse",
+        onInput(s => Msg.NewContent(s)),
+      ),
+      div()(text(model.reverse))
+    )
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Tyrian Example (cont.)
+
+```scala
+object Main extends TyrianIOApp[Msg, Model]:
+  def init(flags: Map[String, String]): (Model, Cmd[IO, Msg]) = ("", Cmd.None)
+
+  def router: Location => Msg = Routing.none(Msg.NoOp)
+
+  def update(model: Model): Msg => (Model, Cmd[IO, Msg]) =
+    case Msg.NewContent(content) => (content, Cmd.None)
+    case Msg.NoOp                => (model, Cmd.None)
+    
+  def subscriptions(model: Model): Sub[IO, Msg] =
+    Sub.None
+```
+</div></script></section></section><section ><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+### Typescript interoperability
+
+```scala
+// https://github.com/lolgab/mill-scalablytyped
+import $ivy.`com.github.lolgab::mill-scalablytyped::0.1.12`
+import com.github.lolgab.mill.scalablytyped._
+
+val ClientDirName = "appClient"
+```
+
+```scala
+/** Generates Scala type definitions out of Typescript type 
+  * definitions. */
+object `scalablytyped-module` extends 
+  BaseScalaJSModule with ScalablyTyped 
+{
+  override def scalablyTypedBasePath = T {
+    T.workspace / ClientDirName / "vite"
+  } 
+
+  override def scalablyTypedIgnoredLibs =
+    Seq("abortcontroller-polyfill")
+}
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+```scala
+import typings.cytoscape.cytoscapeStrings as cyStrings
+import typings.cytoscape.global.cytoscape
+import typings.cytoscape.mod.Css.{
+  ArrowShape, Edge, Node, NodeShape
+}
+import typings.cytoscape.mod.{
+  Core, CytoscapeOptions, EdgeDataDefinition, EdgeDefinition,
+  ElementsDefinition, LayoutOptions, NodeDataDefinition,
+  NodeDefinition, Stylesheet
+}
+import typings.std.stdStrings.nav
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+```scala
+val edgeStyle = Edge()
+  .setWidth(2)
+  .`setCurve-style`(cyStrings.bezier)
+  .`setLine-color`("#ddd")
+  .`setTarget-arrow-shape`(ArrowShape.triangle)
+
+val cyOpts = CytoscapeOptions()
+  .setContainer(container.ref)
+  .setElements(elements)
+  .setStyle(js.Array(
+     Stylesheet.StylesheetStyle(
+       selector = "edge", style = edgeStyle
+     ),
+  ))
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+```scala
+val cy = Cytoscape.create(cyOpts)
+  
+cy.on("tap", "node", (evt, extraParams) => {
+  val node = evt.target.asInstanceOf[js.Dynamic]
+  val nodeIdStr = node.id().asInstanceOf[String]
+  val nodeId = AppDocumentId.parse(nodeIdStr).getOrThrow
+
+  init.pushState(AppPage.DocumentsView(nodeId))
+})
+```
+</div></script></section></section><section ><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+# Shared code
+
+- Most of the Scala libraries have a Scala.JS version.
+- Java libraries are JVM only.
+- Business logic can be shared.
+- API endpoint definition via `tapir` with automatic serialization.
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Tapir
+
+```scala
+val create: Endpoint[
+  AppAuthData, UsersCreateRequest, AppAuthError,
+  AfterLoginResponse.RegisteredData, Any
+] = endpoint
+  .post
+  .securityIn(auth.bearer[AppAuthData]())
+  .errorOut(plainBody[AppAuthError])
+  .in(RootPath / "users")
+  .in(jsonBody[UsersCreateRequest])
+  .out(statusCode(StatusCode.Created))
+  .out(jsonBody[AfterLoginResponse.RegisteredData])
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Endpoint (server)
+
+```scala
+serverInterpreter.toContextRoutes(
+  Endpoints.User.create
+    .contextIn[ServerContext]()
+    .serverSecurityLogic(
+      app.endpoint_impls.Authenticator.authenticated
+    )
+    .serverLogicSuccess(
+      app.endpoint_impls.UsersCreate.apply(_).tupled
+    )
+)
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Auth logic
+
+```scala
+def authenticated(data: AppAuthData)(using 
+  FirebaseApp
+): IO[Either[AppAuthError, AuthenticatedData]] =
+  data.token.verify.map { either =>
+    either
+      .left.map(ex => AppAuthError(ex.getMessage))
+      .map(AuthenticatedData(data.token, _))
+  }
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Main logic
+
+```scala
+def apply(
+  auth: AuthenticatedData
+)(input: UsersCreateRequest, ctx: ServerContext)(using
+  transactor: Transactor[IO],
+  ulidGen: ULIDGenerator,
+): IO[AfterLoginResponse.RegisteredData] = ???
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Client
+
+```scala
+val req = sttpClientInterpreter
+  .toSecureRequest(
+    Endpoints.User.create, baseUri = Some(baseUri.uri)
+  )
+  .apply(securityParams)
+  .apply(params)
+
+val response: IO[Response[
+  Either[AppAuthError, AfterLoginResponse.RegisteredData]
+]] = sttpBackend.send(req)
+```
+</div></script></section></section><section ><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Server
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Configs
+
+- Ciris
+- pureconfig
+- metaconfig
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+### Ciris
+
+```scala
+case class ImmuDbConfig(
+  username: String = "immudb",
+  password: String,
+  database: String,
+)
+object ImmuDbConfig {
+  given cirisConfig[F[_]]: ConfigValue[F, ImmuDbConfig] = (
+    ciris.env("IMMUDB_USERNAME").as[String].default("immudb"),
+    ciris.env("IMMUDB_PASSWORD").as[String],
+    ciris.env("IMMUDB_DATABASE").as[String],
+  ).parMapN(apply)
+}
+```
+```scala
+given cirisConfig[F[_]]: ConfigValue[F, AppConfig] = (
+  PostgresqlConfig.cirisConfig,
+  ImmuDbConfig.cirisConfig,
+  HttpConfig.cirisConfig,
+  BlobStorageConfig.cirisConfig,
+).parMapN(apply)
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+### Pureconfig
+
+- reads [Typesafe Config](https://github.com/lightbend/config) configurations written in
+	- [HOCON](https://github.com/lightbend/config/blob/master/HOCON.md#hocon-human-optimized-config-object-notation),
+	- Java `.properties`,
+	- or JSON
+- to native Scala classes in a boilerplate-free way.
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+```hocon
+// src/main/resources/application.conf
+host = "example.com"
+port = 8080
+use-https = true
+auth-methods = [
+  { type = "private-key", pk-file = "/home/user/myauthkey" },
+  { 
+    type = "login"
+    username = "pureconfig"
+    password = "12345678"
+  }
+]
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+### Metaconfig
+
+- Model configuration as Scala data structures
+- Limit boilerplate where possible
+- Evolve configuration without breaking changes
+- Report helpful error messages
+- Treat command-line arguments as configuration
+- The target use-case for metaconfig is tool maintainers who support HOCON configuration in their tool.
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Database migrations
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+fly4s (flyway for scala)
+
+```scala
+/** Returns the Resource that creates a Fly4s client. */
+def flywayResource(
+  config: Fly4sConfig = Fly4sConfig.default,
+  classLoader: ClassLoader = 
+    Thread.currentThread.getContextClassLoader,
+): Resource[IO, Fly4s[IO]] = Fly4s.make[IO](
+  url = jdbcUrl,
+  user = Some(username),
+  password = Some(password.value.toCharArray),
+  config = config,
+  classLoader = classLoader,
+)
+```
+
+```scala
+flywayResource().use { fly4s =>
+  fly4s.validateAndMigrate.flatMap {
+    case Valid(result) => // ...
+    case Invalid(errors) => // ...
+  }
+}
+```
+</div></script></section></section><section ><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Building
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+### mill + vite
+
+- Mill is a build tool for Java / Scala configurable with Scala code.
+- Mill runs the server in the background and recompiles the JS code which is picked up by Vite.
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+Terminal 1: 
+```bash
+cd appClient/vite && npm run dev
+```
+Terminal 2:
+```bash
+./mill --watch \
+  appClient.fastLinkJS + appServer.runBackground
+```
+or in 2 separate terminals:
+```bash
+./mill --watch appClient.fastLinkJS
+./mill --watch appServer.runBackground
+```
+</div></script></section></section><section ><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Deployment
+
+docker + kamal
+
+```bash
+echo "Cleaning existing files to ensure a clean build..."
+./mill clean appSharedPrelude.__ appShared.__ \
+  appServerPrelude.__ appServer.__ \
+  appClientPrelude.__ appClient.__
+
+echo "Building Scala code..."
+./mill appServer.universalStage + appClient.fullLinkJS
+
+echo "Bundling client with Vite..."
+(cd appClient/vite && npm run build)
+
+echo "Deploying..."
+kamal deploy
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+```dockerfile
+FROM nginx:alpine AS base
+
+# Install the required packages
+RUN apk add --no-cache openjdk21-jre supervisor curl bash
+
+FROM base AS production
+
+# Copy the config files
+COPY config/nginx.conf /etc/nginx/nginx.conf
+COPY config/supervisord.conf /etc/supervisord.conf
+
+# Copy the client
+COPY appClient/vite/dist /usr/share/nginx/html
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+```dockerfile
+# Copy the server
+COPY out/appServer/universalStage.dest/ /app/
+ENV CHQMATE_IS_PRODUCTION=true
+
+# Set up a health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s \
+  --retries=3 
+CMD curl --fail http://localhost/ && curl --fail \
+  http://localhost/api/health || exit 1
+
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+```
+</div></script></section></section><section  data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+Questions?
+</div></script></section></div>
+    </div>
+
+    <script src="dist/reveal.js"></script>
+
+    <script src="plugin/markdown/markdown.js"></script>
+    <script src="plugin/highlight/highlight.js"></script>
+    <script src="plugin/zoom/zoom.js"></script>
+    <script src="plugin/notes/notes.js"></script>
+    <script src="plugin/math/math.js"></script>
+	<script src="plugin/mermaid/mermaid.js"></script>
+	<script src="plugin/chart/chart.min.js"></script>
+	<script src="plugin/chart/plugin.js"></script>
+	<script src="plugin/customcontrols/plugin.js"></script>
+
+    <script>
+      function extend() {
+        var target = {};
+        for (var i = 0; i < arguments.length; i++) {
+          var source = arguments[i];
+          for (var key in source) {
+            if (source.hasOwnProperty(key)) {
+              target[key] = source[key];
+            }
+          }
+        }
+        return target;
+      }
+
+	  function isLight(color) {
+		let hex = color.replace('#', '');
+
+		// convert #fff => #ffffff
+		if(hex.length == 3){
+			hex = `${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}`;
+		}
+
+		const c_r = parseInt(hex.substr(0, 2), 16);
+		const c_g = parseInt(hex.substr(2, 2), 16);
+		const c_b = parseInt(hex.substr(4, 2), 16);
+		const brightness = ((c_r * 299) + (c_g * 587) + (c_b * 114)) / 1000;
+		return brightness > 155;
+	}
+
+	var bgColor = getComputedStyle(document.documentElement).getPropertyValue('--r-background-color').trim();
+	var isLight = isLight(bgColor);
+
+	if(isLight){
+		document.body.classList.add('has-light-background');
+	} else {
+		document.body.classList.add('has-dark-background');
+	}
+
+      // default options to init reveal.js
+      var defaultOptions = {
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        transition: 'default', // none/fade/slide/convex/concave/zoom
+        plugins: [
+          RevealMarkdown,
+          RevealHighlight,
+          RevealZoom,
+          RevealNotes,
+          RevealMath.MathJax3,
+		  RevealMermaid,
+		  RevealChart,
+		  RevealCustomControls,
+        ],
+
+
+    	allottedTime: 120 * 1000,
+
+		mathjax3: {
+			mathjax: 'plugin/math/mathjax/tex-mml-chtml.js',
+		},
+		markdown: {
+		  gfm: true,
+		  mangle: true,
+		  pedantic: false,
+		  smartLists: false,
+		  smartypants: false,
+		},
+
+		mermaid: {
+			theme: isLight ? 'default' : 'dark',
+		},
+
+		customcontrols: {
+			controls: [
+			]
+		},
+      };
+
+      // options from URL query string
+      var queryOptions = Reveal().getQueryHash() || {};
+
+      var options = extend(defaultOptions, {"width":960,"height":700,"margin":0.04,"controls":true,"progress":true,"slideNumber":false,"transition":"slide","transitionSpeed":"default"}, queryOptions);
+    </script>
+
+    <script>
+      Reveal.initialize(options);
+    </script>
+  </body>
+
+  <!-- created with Advanced Slides -->
+</html>
