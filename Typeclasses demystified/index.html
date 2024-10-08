@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <title></title>
+    <link rel="stylesheet" href="dist/reveal.css" />
+    <link rel="stylesheet" href="dist/theme/black.css" id="theme" />
+    <link rel="stylesheet" href="plugin/highlight/zenburn.css" />
+	<link rel="stylesheet" href="css/layout.css" />
+	<link rel="stylesheet" href="plugin/customcontrols/style.css">
+
+
+
+    <script defer src="dist/fontawesome/all.min.js"></script>
+
+	<script type="text/javascript">
+		var forgetPop = true;
+		function onPopState(event) {
+			if(forgetPop){
+				forgetPop = false;
+			} else {
+				parent.postMessage(event.target.location.href, "app://obsidian.md");
+			}
+        }
+		window.onpopstate = onPopState;
+		window.onmessage = event => {
+			if(event.data == "reload"){
+				window.document.location.reload();
+			}
+			forgetPop = true;
+		}
+
+		function fitElements(){
+			const itemsToFit = document.getElementsByClassName('fitText');
+			for (const item in itemsToFit) {
+				if (Object.hasOwnProperty.call(itemsToFit, item)) {
+					var element = itemsToFit[item];
+					fitElement(element,1, 1000);
+					element.classList.remove('fitText');
+				}
+			}
+		}
+
+		function fitElement(element, start, end){
+
+			let size = (end + start) / 2;
+			element.style.fontSize = `${size}px`;
+
+			if(Math.abs(start - end) < 1){
+				while(element.scrollHeight > element.offsetHeight){
+					size--;
+					element.style.fontSize = `${size}px`;
+				}
+				return;
+			}
+
+			if(element.scrollHeight > element.offsetHeight){
+				fitElement(element, start, size);
+			} else {
+				fitElement(element, size, end);
+			}		
+		}
+
+
+		document.onreadystatechange = () => {
+			fitElements();
+			if (document.readyState === 'complete') {
+				if (window.location.href.indexOf("?export") != -1){
+					parent.postMessage(event.target.location.href, "app://obsidian.md");
+				}
+				if (window.location.href.indexOf("print-pdf") != -1){
+					let stateCheck = setInterval(() => {
+						clearInterval(stateCheck);
+						window.print();
+					}, 250);
+				}
+			}
+	};
+
+
+        </script>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides"><section  data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Typeclasses
+ # Demystified
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+### So what is a typeclass?
+
+- It's a design pattern where functionality for a type is provided by an external class.
+- For example, `java.util.Comparator<T>`
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## How are typeclasses useful?
+- Allows multiple implementations (same data, multiple JSON formats).
+- Allows ad-hoc implementations for types we don't control.
+- Compile-time safety.
+- Performance (static dispatch, no reflection)
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+# Let's serialize some JSON!
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## JSON serialization
+We will serialize to `String` instead of `JsonAst` for simplicity.
+</div></script></section><section ><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+### What
+
+```java
+public record Person(String name, int age) {}
+
+var people = new Person[]{  
+    new Person("John", 30),  
+    new Person("Jane", 25),  
+};
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+### How
+```java
+var peopleSerializer = new ArraySerializer<>(
+	ObjectSerializer.of(  
+        new NameWithSerializer<>(
+          "name", 
+          StringSerializer.INSTANCE.contramap(Person::name)
+	    ),  
+        new NameWithSerializer<>(
+          "age", 
+          IntSerializer.INSTANCE.contramap(Person::age)
+	    )  
+	)
+);
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+### And finally
+```java
+peopleSerializer.serialize(people);
+// [{"name": "John","age": 30},{"name": "Jane","age": 25}]
+```
+</div></script></section></section><section  data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+# So how is this implemented?
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+### Let's define our own typeclass!
+
+```java
+public interface JsonSerializer<A> {  
+    String serialize(A a);
+}
+```
+</div></script></section><section ><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+### We need a couple of instances
+```java
+public class StringSerializer 
+        implements JsonSerializer<String> {  
+    @Override  
+    public String serialize(String a) {  
+        // Not production ready, of course!
+        return "\"" + a + "\"";  
+    }  
+  
+    public static StringSerializer INSTANCE = 
+      new StringSerializer();  
+}
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+### We need a couple of instances
+```java
+public class IntSerializer 
+        implements JsonSerializer<Integer> {  
+    @Override  
+    public String serialize(Integer a) {  
+        return String.valueOf(a);  
+    }  
+  
+    public static IntSerializer INSTANCE = 
+      new IntSerializer();  
+}
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+### We need a couple of instances
+```java
+public record ArraySerializer<A>(
+    JsonSerializer<A> serializer
+) implements JsonSerializer<A[]> {  
+    @Override  
+    public String serialize(A[] a) {  
+        return Arrays.stream(a)  
+                .map(serializer::serialize)  
+                .collect(Collectors.joining(",", "[", "]"));  
+    }  
+}
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+### We need a couple of instances
+```java
+public record NameWithSerializer<Input>(
+        String name, JsonSerializer<Input> serializer
+) {}
+```
+
+```java
+public record ObjectSerializer<Input>(  
+        List<NameWithSerializer<Input>> serializers  
+) implements JsonSerializer<Input> {
+    public static <Input> ObjectSerializer<Input> of(  
+            NameWithSerializer<Input>... serializers  
+    ) {  
+        return new ObjectSerializer<>(
+	        Arrays.asList(serializers)
+		);  
+    }  
+}
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+### We need a couple of instances
+```java
+public record ObjectSerializer<Input>(/*...*/) {
+    @Override  
+    public String serialize(Input input) {  
+        return serializers  
+			.stream()  
+			.map(s ->  
+				StringSerializer.INSTANCE.serialize(s.name) + 
+					": " + s.serializer.serialize(input)  
+			)  
+			.collect(Collectors.joining(",", "{", "}"));  
+    }
+}
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+### Contramap helper
+```java
+public interface JsonSerializer<A> {
+	default <B> JsonSerializer<B> contramap(
+		Function<B, A> mapper
+	) {  
+	    return new Contramap<>(mapper, this);  
+	}  
+}
+```
+```java
+public record Contramap<A, B>(
+	Function<B, A> mapper, JsonSerializer<A> serializer
+) implements JsonSerializer<B> {  
+    @Override  
+    public String serialize(B b) {  
+        return serializer.serialize(mapper.apply(b));  
+    }  
+}
+```
+</div></script></section></section><section  data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Pros and cons
+- Pro: Typesafe - failures occur at compile time.
+- Con: Developer experience is terrible.
+- No wonder no one uses this in Java world.
+</div></script></section><section ><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Why is DX terrible?
+
+Need to specify the serializer for the field
+```java
+new NameWithSerializer<>(
+  "age", 
+  IntSerializer.INSTANCE.contramap(Person::age)
+)
+```
+Wanted API
+```java
+new NameWithSerializer<>("age", Person::age)
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+Need to spell out all properties
+```java
+ObjectSerializer.of(  
+	new NameWithSerializer<>(/* name */),  
+	new NameWithSerializer<>(/* age */)
+)
+```
+Wanted API
+```java
+ObjectSerializer.of<Person>()
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+Need to spell out the structure of the serialized thing
+```java
+var peopleSerializer = new ArraySerializer<>(
+	ObjectSerializer.of(  
+        new NameWithSerializer<>(
+          "name", 
+          StringSerializer.INSTANCE.contramap(Person::name)
+	    ),  
+        new NameWithSerializer<>(
+          "age", 
+          IntSerializer.INSTANCE.contramap(Person::age)
+	    )  
+	)
+);
+```
+
+Wanted API
+```java
+var json = JsonSerializer.serialize(people);
+```
+</div></script></section></section><section  data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Can we do it?
+
+Not in Java.
+
+At least not without annotation processors.
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Scala time!
+
+First lets do a 1:1 translation
+</div></script></section><section ><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+```scala
+// java: public interface JsonSerializer<A>  
+trait JsonSerializer[A] {  
+  def serialize(a: A): String  
+  
+  def contramap[B](f: B => A): JsonSerializer[B] =  
+    b => serialize(f(b))
+}
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+```scala
+// java: StringSerializer  
+given StringSerializer: JsonSerializer[String] =
+  str => s"\"$str\""
+  
+// java: IntSerializer  
+given IntSerializer: JsonSerializer[Int] = 
+  i => i.toString
+  
+// java: ArraySerializer  
+given SeqSerializer[A](
+  using ser: JsonSerializer[A]
+): JsonSerializer[Seq[A]] =  
+  seq => seq.map(ser.serialize).mkString("[", ", ", "]")
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+```scala
+case class NameWithSerializer[A](
+  name: String, serializer: JsonSerializer[A]
+)
+
+def ObjectSerializer[A](
+  serializers: NameWithSerializer[A]* /* varargs */
+): JsonSerializer[A] = 
+  obj => serializers  
+    .map { ser => 
+      val key = StringSerializer.serialize(ser.name)
+      val value = ser.serializer.serialize(obj)
+      key + ": " + value
+    }  
+    .mkString("{", ", ", "}")
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+```scala
+case class Person(name: String, age: Int)  
+  
+val people = Seq(Person("Alice", 25), Person("Bob", 30))  
+val personSerializer = ObjectSerializer[Person](
+  NameWithSerializer(
+    "name", StringSerializer.contramap(_.name)
+  ),
+  NameWithSerializer("age", IntSerializer.contramap(_.age))
+)
+val peopleSerializer = SeqSerializer(using personSerializer)  
+  
+println(peopleSerializer.serialize(people))
+// [{"name": "Alice", "age": 25}, {"name": "Bob", "age": 30}]
+```
+</div></script></section></section><section  data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Advantages of Scala
+- It's a lot more concise.
+- Type inference is better.
+- But we can do even better.
+</div></script></section><section ><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Improve field serialization
+We don't want to specify the field type.
+
+```scala
+object NameWithSerializer {  
+  def of[A, B](name: String, f: A => B)(using 
+    ser: JsonSerializer[B]
+  ): NameWithSerializer[A] =  
+    apply(name, ser.contramap(f))  
+}  
+  
+val personSerializer = ObjectSerializer[Person](  
+  NameWithSerializer.of("name", _.name)/*(using ...)*/,  
+  NameWithSerializer.of("age", _.age)//(using IntSerializer)
+)
+
+// given StringSerializer: JsonSerializer[String] = ...
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Implicit resolution order
+Where does Scala look for `JsonSerializer[String]`?
+
+***Roughly*** here:
+1. Immediate scope: local function, etc.
+2. Imported scope
+3. `String` companion object
+4. `JsonSerializer` companion object
+</div></script></section></section><section ><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Skip listing fields
+You need derivation! :)
+```scala
+//> using dep "com.softwaremill.magnolia1_3::magnolia:1.3.7"
+import magnolia1.*
+
+object ObjectSerializer // `split` not implemented
+    extends AutoDerivation[JsonSerializer] {
+  override def join[T](
+    caseClass: CaseClass[JsonSerializer, T]
+  ): JsonSerializer[T] = obj => {
+    caseClass.params.iterator.map { param =>
+	  val name = StringSerializer.serialize(param.label)
+	  val value = param.deref(obj)
+	  s"`$name: $`{param.typeclass.serialize(value)}"
+    }.mkString("{", ", ", "}")
+  }
+}
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Derivation!
+```scala
+val personSerializer3 = ObjectSerializer.derived[Person]
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Derivation: full picture
+```scala
+import scala.deriving.*
+object JsonSerializer {
+  inline def derived[A: Mirror.Of]: JsonSerializer[A] = 
+    ObjectSerializer.derived
+}
+
+case class Person(name: String, age: Int) 
+  derives JsonSerializer
+
+extension [A](a: A)(using ser: JsonSerializer[A]) {
+  def toJson: String = ser.serialize(a)
+}
+```
+```scala
+Seq(Person("Alice", 25), Person("Bob", 30)).toJson
+// [{"name": "Alice", "age": 25}, {"name": "Bob", "age": 30}]
+```
+</div></script></section></section><section ><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## How does this affect us?
+
+- Scala uses typeclasses where Java/Kotlin/C#/F# uses runtime reflection.
+- Errors are caught at compile time rather than runtime.
+- GraalVM AOT compiler is a lot happier about this.
+- Developer experience is better - things are more traceable in your IDE.
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Typeclasses, typeclasses everywhere!
+- `scala.CanEqual[A, B]` - safe `==`
+- `scala.math.Ordering[A]` - allows comparing
+- `cats.Show[A]` - safe `toString`
+- `io.circe.Codec[A]` - JSON codec
+- `laminar.RenderableText[A]` - can be rendered as HTML text
+- ...
+</div></script></section></section><section  data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+# Questions?
+</div></script></section></div>
+    </div>
+
+    <script src="dist/reveal.js"></script>
+
+    <script src="plugin/markdown/markdown.js"></script>
+    <script src="plugin/highlight/highlight.js"></script>
+    <script src="plugin/zoom/zoom.js"></script>
+    <script src="plugin/notes/notes.js"></script>
+    <script src="plugin/math/math.js"></script>
+	<script src="plugin/mermaid/mermaid.js"></script>
+	<script src="plugin/chart/chart.min.js"></script>
+	<script src="plugin/chart/plugin.js"></script>
+	<script src="plugin/customcontrols/plugin.js"></script>
+
+    <script>
+      function extend() {
+        var target = {};
+        for (var i = 0; i < arguments.length; i++) {
+          var source = arguments[i];
+          for (var key in source) {
+            if (source.hasOwnProperty(key)) {
+              target[key] = source[key];
+            }
+          }
+        }
+        return target;
+      }
+
+	  function isLight(color) {
+		let hex = color.replace('#', '');
+
+		// convert #fff => #ffffff
+		if(hex.length == 3){
+			hex = `${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}`;
+		}
+
+		const c_r = parseInt(hex.substr(0, 2), 16);
+		const c_g = parseInt(hex.substr(2, 2), 16);
+		const c_b = parseInt(hex.substr(4, 2), 16);
+		const brightness = ((c_r * 299) + (c_g * 587) + (c_b * 114)) / 1000;
+		return brightness > 155;
+	}
+
+	var bgColor = getComputedStyle(document.documentElement).getPropertyValue('--r-background-color').trim();
+	var isLight = isLight(bgColor);
+
+	if(isLight){
+		document.body.classList.add('has-light-background');
+	} else {
+		document.body.classList.add('has-dark-background');
+	}
+
+      // default options to init reveal.js
+      var defaultOptions = {
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        transition: 'default', // none/fade/slide/convex/concave/zoom
+        plugins: [
+          RevealMarkdown,
+          RevealHighlight,
+          RevealZoom,
+          RevealNotes,
+          RevealMath.MathJax3,
+		  RevealMermaid,
+		  RevealChart,
+		  RevealCustomControls,
+        ],
+
+
+    	allottedTime: 120 * 1000,
+
+		mathjax3: {
+			mathjax: 'plugin/math/mathjax/tex-mml-chtml.js',
+		},
+		markdown: {
+		  gfm: true,
+		  mangle: true,
+		  pedantic: false,
+		  smartLists: false,
+		  smartypants: false,
+		},
+
+		mermaid: {
+			theme: isLight ? 'default' : 'dark',
+		},
+
+		customcontrols: {
+			controls: [
+			]
+		},
+      };
+
+      // options from URL query string
+      var queryOptions = Reveal().getQueryHash() || {};
+
+      var options = extend(defaultOptions, {"width":960,"height":700,"margin":0.04,"controls":true,"progress":true,"slideNumber":false,"transition":"slide","transitionSpeed":"default"}, queryOptions);
+    </script>
+
+    <script>
+      Reveal.initialize(options);
+    </script>
+  </body>
+
+  <!-- created with Advanced Slides -->
+</html>
