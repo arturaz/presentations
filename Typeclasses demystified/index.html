@@ -89,6 +89,14 @@
 
 ## Typeclasses
  # Demystified
+
+Artūras Šlajus, 2024
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Agenda
+
+Get an introduction to what typeclasses are and how they are useful.
 </div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
 <div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
 
@@ -100,9 +108,9 @@
 <div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
 
 ## How are typeclasses useful?
-- Allows multiple implementations (same data, multiple JSON formats).
+- Allows multiple implementations (for example, same data, multiple JSON formats).
 - Allows ad-hoc implementations for types we don't control.
-- Compile-time safety.
+- **Compile-time safety** (as opposed to reflection-based tools)
 - Performance (static dispatch, no reflection)
 </div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
 <div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
@@ -179,7 +187,7 @@ public class StringSerializer
         return "\"" + a + "\"";  
     }  
   
-    public static StringSerializer INSTANCE = 
+    public static final StringSerializer INSTANCE = 
       new StringSerializer();  
 }
 ```
@@ -195,7 +203,7 @@ public class IntSerializer
         return String.valueOf(a);  
     }  
   
-    public static IntSerializer INSTANCE = 
+    public static final IntSerializer INSTANCE = 
       new IntSerializer();  
 }
 ```
@@ -361,8 +369,8 @@ First lets do a 1:1 translation
 trait JsonSerializer[A] {  
   def serialize(a: A): String  
   
-  def contramap[B](f: B => A): JsonSerializer[B] =  
-    b => serialize(f(b))
+  def contramap[B](mapper: B => A): JsonSerializer[B] =  
+    b => serialize(mapper(b))
 }
 ```
 </div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
@@ -463,7 +471,40 @@ Where does Scala look for `JsonSerializer[String]`?
 <div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
 
 ## Skip listing fields
-You need derivation! :)
+For that you need derivation! :)
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+### What is derivation?
+
+Given that:
+- we know how to process each part
+- and we have a rule how to join all parts together
+
+We can provide an instance that processes all parts!
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+```scala
+// Given that
+case class Person(name: String, age: Int)
+val person = Person("Bob", 32)
+```
+
+```
+// Process each part
+name -> "name": "Bob"
+age  -> "age": 32
+```
+
+```json
+// And join them
+{"name": "Bob", "age": 32}
+```
+</div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+### Derivation with magnolia
 ```scala
 //> using dep "com.softwaremill.magnolia1_3::magnolia:1.3.7"
 import magnolia1.*
@@ -476,7 +517,7 @@ object ObjectSerializer // `split` not implemented
     caseClass.params.iterator.map { param =>
 	  val name = StringSerializer.serialize(param.label)
 	  val value = param.deref(obj)
-	  s"`$name: $`{param.typeclass.serialize(value)}"
+	  name + ": " + param.typeclass.serialize(value)
     }.mkString("{", ", ", "}")
   }
 }
@@ -484,9 +525,9 @@ object ObjectSerializer // `split` not implemented
 </div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
 <div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
 
-## Derivation!
+## Derivation usage
 ```scala
-val personSerializer3 = ObjectSerializer.derived[Person]
+val personSerializer = ObjectSerializer.derived[Person]
 ```
 </div></script></section><section data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
 <div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
@@ -530,6 +571,14 @@ Seq(Person("Alice", 25), Person("Bob", 30)).toJson
 - `laminar.RenderableText[A]` - can be rendered as HTML text
 - ...
 </div></script></section></section><section  data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Conclusions
+
+- I would argue that it's better to write typeclasses without derivation than to use Jackson :)
+- At least that is what we did in C#.
+- Tests only cover cases you thought about. Math proves.
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="has-dark-background drop" data-background-color="rgb(70, 70, 120)" -->
 <div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
 
 # Questions?
